@@ -923,7 +923,8 @@ class Listener(threading.Thread):
 
     def t_openshift_process(self, *args, **kwargs):
         """
-        Launches an openshift job from a pman thread
+        The openshift process initiates an openshift job by calling the openshift.py class.
+        This is used to launch jobs within the openshift cluster. 
         """
 
         self.dp.qprint("In hello process...")
@@ -939,7 +940,23 @@ class Listener(threading.Thread):
             self.auid   = d_meta['auid']
             str_cmd     = d_meta['cmd']
 
+        if isinstance(self.jid, int):
+            self.jid    = str(self.jid)
 
+        self.dp.qprint("spawing and starting poller thread")
+
+        # Start the 'poller' worker
+        self.poller  = Poller(cmd           = str_cmd,
+                              debugToFile   = self.b_debugToFile,
+                              debugFile     = self.str_debugFile)
+        self.poller.start()
+
+        str_timeStamp       = datetime.datetime.today().strftime('%Y%m%d%H%M%S.%f')
+        str_uuid            = uuid.uuid4()
+        str_dir             = '%s_%s' % (str_timeStamp, str_uuid)
+        self.str_jobRootDir = str_dir
+        
+         b_jobsAllDone       = False
 
 
     def t_hello_process(self, *args, **kwargs):
