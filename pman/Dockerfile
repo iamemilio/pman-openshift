@@ -17,9 +17,11 @@
 FROM fnndsc/ubuntu-python3:latest
 MAINTAINER fnndsc "dev@babymri.org"
 
+COPY pman /tmp
+
 RUN apt-get update \
   && apt-get install -y libssl-dev libcurl4-openssl-dev bsdmainutils \
-  && pip3 install ./pman/pman
+  && pip3 install /tmp/pman \
   && pip3 install docker
 
 COPY ./docker-entrypoint.py /dock/docker-entrypoint.py

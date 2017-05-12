@@ -121,7 +121,8 @@ class pman(object):
         self.dp                 = debug(    verbosity   = 0,
                                             level       = -1,
                                             debugFile   = self.str_debugFile,
-                                            debugToFile = self.b_debugToFile)
+                                       
+     debugToFile = self.b_debugToFile)
 
         if self.b_clearDB and os.path.isdir(self.str_DBpath):
             shutil.rmtree(self.str_DBpath)
@@ -935,28 +936,45 @@ class Listener(threading.Thread):
 
         d_meta          = d_request['meta']
 
+        #specify parameters here ---> pass them in meta json payload
+        #these parameters should match the inputs for the openshift-manager.py class, as well as the needs for the pman process manager.
+        """
+        Current meta params:  modeled after the run command
+            jid: a unique ID assigned to a job
+            auid: Authorized user id. Id of the user requesting the job.
+            cmd: The name of the command you intend to run.
+        """
         if d_meta:
-            self.jid    = d_meta['jid']
-            self.auid   = d_meta['auid']
-            str_cmd     = d_meta['cmd']
+            if 'jid' in d_meta.keys() and 'auid' in d_meta.keys() and 'cmd' in d_meta.keys():
+                self.jid    = d_meta['jid']
+                self.auid   = d_meta['auid']
+                self.str_cmd     = d_meta['cmd']
+            else:
+                self.dp.qprint("Process Failed! Insufficient or incorrect meta parameters!")
+                return {"d_ret":    d_ret,
+                        "status":   b_status}
+            
+            #launch openshiftController container here 
+            
 
-        if isinstance(self.jid, int):
-            self.jid    = str(self.jid)
 
-        self.dp.qprint("spawing and starting poller thread")
+            #poll status of container until docker ps -a shows it running
 
-        # Start the 'poller' worker
-        self.poller  = Poller(cmd           = str_cmd,
-                              debugToFile   = self.b_debugToFile,
-                              debugFile     = self.str_debugFile)
-        self.poller.start()
 
-        str_timeStamp       = datetime.datetime.today().strftime('%Y%m%d%H%M%S.%f')
-        str_uuid            = uuid.uuid4()
-        str_dir             = '%s_%s' % (str_timeStamp, str_uuid)
-        self.str_jobRootDir = str_dir
-        
-         b_jobsAllDone       = False
+            
+            #if job succesful
+            '''
+            to make a dictionary object as a return parameter
+            d_ret['x'] = {}  
+            
+            to add parameters to that dictionary object
+            d_ret['x']['y'] = what to return on lookup of x,y in system
+            
+            '''
+            b_status = True
+            return {"d_ret":    d_ret,
+                    "status":   b_status}
+
 
 
     def t_hello_process(self, *args, **kwargs):
